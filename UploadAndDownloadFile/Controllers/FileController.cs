@@ -47,5 +47,50 @@ namespace UploadAndDownloadFile.Controllers
 
             return Ok( new { dbPath });
         }
+
+        // Multiple file Upload 
+        [HttpPost("multipleUpload"), DisableRequestSizeLimit]
+        public async Task<IActionResult> MultipleUploadFile([FromForm] MultipleFilesUploadModel model)
+        {
+            var response = new Dictionary<string, string>();
+            
+            if(model.Files == null || model.Files.Count == 0)
+            {
+                return BadRequest("Invalid file(s)!");
+            }
+
+            foreach (var file in model.Files)
+            {
+                var folderName = Path.Combine("Resources", "AllFiles");
+                var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+
+                if (!Directory.Exists(pathToSave))
+                {
+                    Directory.CreateDirectory(pathToSave);
+                }
+
+                var fileName = file.FileName;   
+                var fullPath = Path.Combine(pathToSave, fileName);
+
+                var dbPath = Path.Combine(folderName, fileName);
+
+                // checking exists this file in path
+                if (!System.IO.File.Exists(fullPath))
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(memoryStream);
+                        await System.IO.File.WriteAllBytesAsync(fullPath, memoryStream.ToArray());
+                        response.Add(fileName, dbPath);
+                    };
+                }
+                else
+                {
+                    response.Add(fileName, " : Already exist!");
+                }
+            }
+
+            return Ok(new { response });
+        }
     }
 }
