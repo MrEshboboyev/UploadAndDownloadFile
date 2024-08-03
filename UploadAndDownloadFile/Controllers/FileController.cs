@@ -92,5 +92,29 @@ namespace UploadAndDownloadFile.Controllers
 
             return Ok(new { response });
         }
+
+        // download file
+        [HttpGet("download/{downloadFileName}")]
+        public async Task<IActionResult> DownloadFile(string downloadFileName)
+        {
+            var folderName = Path.Combine("Resources", "AllFiles");
+            var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+            var fileName = downloadFileName;
+            var fullPath = Path.Combine(pathToSave, fileName);
+
+            if (!System.IO.File.Exists(fullPath))
+            {
+                return BadRequest("File not exists in database!");
+            }
+
+            // download file getting section
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+            var fileContentResult = new FileContentResult(fileBytes, "application/octet-stream")
+            {
+                FileDownloadName = fileName,
+            };
+
+            return fileContentResult;
+        }
     }
 }
